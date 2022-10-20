@@ -1,14 +1,5 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+use libasi_sys;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+pub fn get_num_of_connected_cameras() -> i32 {
+    unsafe { libasi_sys::ASIGetNumOfConnectedCameras() }
 }

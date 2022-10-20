@@ -1,3 +1,6 @@
 fn main() {
-    println!("Hello, world!");
+    println!(
+        "Found {} ZWO cameras",
+        libasi::get_num_of_connected_cameras()
+    );
 }
