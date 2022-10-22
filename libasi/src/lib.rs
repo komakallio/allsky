@@ -1,16 +1,16 @@
 use libasi_sys;
 
 pub struct CameraInfo {
-    camera_id: i32,
-    max_height: i64,
-    max_width: i64,
+    pub camera_id: i32,
+    pub max_height: i64,
+    pub max_width: i64,
 }
 
 pub fn get_num_of_connected_cameras() -> i32 {
     unsafe { libasi_sys::ASIGetNumOfConnectedCameras() }
 }
 
-pub fn get_camera_property() -> CameraInfo {
+pub fn get_camera_property(camera_idx: i32) -> CameraInfo {
     let mut camera_info = libasi_sys::ASI_CAMERA_INFO {
         Name: [0; 64],
         CameraID: 0,
@@ -32,14 +32,8 @@ pub fn get_camera_property() -> CameraInfo {
         Unused: [0; 16],
     };
     unsafe {
-        let return_value: i32 = libasi_sys::ASIGetCameraProperty(&mut camera_info, 0);
-        println!("{}", return_value);
+        libasi_sys::ASIGetCameraProperty(&mut camera_info, camera_idx);
     }
-
-    println!(
-        "{} - {}x{}",
-        camera_info.CameraID, camera_info.MaxHeight, camera_info.MaxWidth
-    );
 
     CameraInfo {
         camera_id: camera_info.CameraID,
