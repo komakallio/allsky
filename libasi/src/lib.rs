@@ -32,7 +32,8 @@ pub fn get_camera_property() -> CameraInfo {
         Unused: [0; 16],
     };
     unsafe {
-        libasi_sys::ASIGetCameraProperty(&mut camera_info, 0);
+        let return_value: i32 = libasi_sys::ASIGetCameraProperty(&mut camera_info, 0);
+        println!("{}", return_value);
     }
 
     println!(
