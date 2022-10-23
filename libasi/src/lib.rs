@@ -17,6 +17,7 @@ pub struct CameraInfo {
     pub is_color_cam: bool,
     pub bayer_pattern: BayerPattern,
     pub bit_depth: i32,
+    pub is_trigger_cam: bool,
 }
 
 pub fn get_num_of_connected_cameras() -> i32 {
@@ -79,5 +80,26 @@ pub fn get_camera_property(camera_idx: i32) -> CameraInfo {
             _ => panic!("Unrecognized bayer pattern"),
         },
         bit_depth: camera_info.BitDepth,
+        is_trigger_cam: match camera_info.IsTriggerCam {
+            libasi_sys::ASI_BOOL_ASI_FALSE => false,
+            libasi_sys::ASI_BOOL_ASI_TRUE => true,
+            _ => panic!("Unrecognized boolean value"),
+        },
+    }
+}
+
+pub fn open_camera(camera_id: i32) {
+    let return_code = unsafe { libasi_sys::ASIOpenCamera(camera_id) };
+
+    if return_code != 0 {
+        panic!("Could not open camera, return code: {}", return_code);
+    }
+}
+
+pub fn close_camera(camera_id: i32) {
+    let return_code = unsafe { libasi_sys::ASICloseCamera(camera_id) };
+
+    if return_code != 0 {
+        panic!("Could not close camera, return code: {}", return_code);
     }
 }
