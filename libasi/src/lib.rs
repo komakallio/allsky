@@ -112,3 +112,67 @@ pub fn close_camera(camera_id: i32) {
         panic!("Could not close camera, return code: {}", return_code);
     }
 }
+
+#[derive(Debug)]
+pub struct CameraControl {
+    name: String,
+    control_index: i32,
+    value: i64,
+    can_auto_adjust: bool,
+    is_auto_adjusted: bool,
+    is_writable: bool,
+}
+
+pub fn get_controls(camera_id: i32) -> Vec<CameraControl> {
+    let mut num_controls: i32 = 0;
+    unsafe {
+        libasi_sys::ASIGetNumOfControls(camera_id, &mut num_controls);
+    }
+
+    let mut controls = Vec::<CameraControl>::with_capacity(num_controls as usize);
+    for i in 0..num_controls {
+        let mut capability = libasi_sys::ASI_CONTROL_CAPS {
+            Name: [0; 64],
+            Description: [0; 128],
+            MaxValue: 0,
+            MinValue: 0,
+            DefaultValue: 0,
+            IsAutoSupported: 0,
+            IsWritable: 0,
+            ControlType: 0,
+            Unused: [0; 32],
+        };
+        unsafe {
+            libasi_sys::ASIGetControlCaps(camera_id, i, &mut capability);
+        }
+
+        let mut value: i64 = 0;
+        let mut auto: i32 = 0;
+        unsafe {
+            libasi_sys::ASIGetControlValue(
+                camera_id,
+                capability.ControlType as i32,
+                &mut value,
+                &mut auto,
+            );
+        }
+
+        let cap_name_vector = capability
+            .Name
+            .iter()
+            .cloned()
+            .filter(|&x| x != 0u8)
+            .collect::<Vec<_>>();
+
+        controls.push(CameraControl {
+            control_index: i,
+            name: String::from_utf8(cap_name_vector).unwrap_or(String::from("Invalid name")),
+            value: value,
+            can_auto_adjust: capability.IsAutoSupported > 0,
+            is_auto_adjusted: auto > 0,
+            is_writable: capability.IsWritable > 0,
+        });
+    }
+
+    controls
+}
