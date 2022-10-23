@@ -89,10 +89,19 @@ pub fn get_camera_property(camera_idx: i32) -> CameraInfo {
 }
 
 pub fn open_camera(camera_id: i32) {
-    let return_code = unsafe { libasi_sys::ASIOpenCamera(camera_id) };
+    let open_return_code = unsafe { libasi_sys::ASIOpenCamera(camera_id) };
 
-    if return_code != 0 {
-        panic!("Could not open camera, return code: {}", return_code);
+    if open_return_code != 0 {
+        panic!("Could not open camera, return code: {}", open_return_code);
+    }
+
+    let init_return_code = unsafe { libasi_sys::ASIInitCamera(camera_id) };
+
+    if init_return_code != 0 {
+        panic!(
+            "Could not initialize camera, return code: {}",
+            init_return_code
+        );
     }
 }
 
