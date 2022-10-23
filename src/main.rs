@@ -13,8 +13,11 @@ fn main() {
     );
     libasi::open_camera(camera_info.camera_id);
 
+    println!("Listing camera controls");
     let camera_controls = libasi::get_controls(camera_info.camera_id);
-    println!("{:?}", camera_controls);
+    for c in camera_controls {
+        println!("{:?}", c);
+    }
 
     println!(
         "Closing camera {} with ID {}",

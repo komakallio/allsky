@@ -115,12 +115,12 @@ pub fn close_camera(camera_id: i32) {
 
 #[derive(Debug)]
 pub struct CameraControl {
-    name: String,
-    control_index: i32,
-    value: i64,
-    can_auto_adjust: bool,
-    is_auto_adjusted: bool,
-    is_writable: bool,
+    pub name: String,
+    pub control_index: i32,
+    pub value: i64,
+    pub can_auto_adjust: bool,
+    pub is_auto_adjusted: bool,
+    pub is_writable: bool,
 }
 
 pub fn get_controls(camera_id: i32) -> Vec<CameraControl> {
