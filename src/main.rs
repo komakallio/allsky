@@ -19,6 +19,9 @@ fn main() {
         println!("{:?}", c);
     }
 
+    println!("Taking picture!");
+    let _result = libasi::get_snapshot(&camera_info).unwrap();
+
     println!(
         "Closing camera {} with ID {}",
         camera_info.name, camera_info.camera_id

@@ -12,11 +12,11 @@ pub enum BayerPattern {
 pub struct CameraInfo {
     pub name: String,
     pub camera_id: i32,
-    pub max_height: i64,
-    pub max_width: i64,
+    pub max_height: u32,
+    pub max_width: u32,
     pub is_color_cam: bool,
     pub bayer_pattern: BayerPattern,
-    pub bit_depth: i32,
+    pub bit_depth: u32,
     pub is_trigger_cam: bool,
 }
 
@@ -45,8 +45,8 @@ pub fn get_camera_property(camera_idx: i32) -> CameraInfo {
         IsTriggerCam: 0,
         Unused: [0; 16],
     };
-    let return_code = unsafe { libasi_sys::ASIGetCameraProperty(&mut camera_info, camera_idx) };
 
+    let return_code = unsafe { libasi_sys::ASIGetCameraProperty(&mut camera_info, camera_idx) };
     if return_code != 0 {
         panic!(
             "Could not get camera properties, return code: {}",
@@ -65,8 +65,14 @@ pub fn get_camera_property(camera_idx: i32) -> CameraInfo {
     CameraInfo {
         name: String::from_utf8(camera_name_vector).unwrap_or(String::from("Invalid name")),
         camera_id: camera_info.CameraID,
-        max_height: camera_info.MaxHeight,
-        max_width: camera_info.MaxWidth,
+        max_height: camera_info
+            .MaxHeight
+            .try_into()
+            .expect("Could not fit image max height into u32"),
+        max_width: camera_info
+            .MaxWidth
+            .try_into()
+            .expect("Could not fit image max width into u32"),
         is_color_cam: match camera_info.IsColorCam {
             libasi_sys::ASI_BOOL_ASI_FALSE => false,
             libasi_sys::ASI_BOOL_ASI_TRUE => true,
@@ -79,7 +85,10 @@ pub fn get_camera_property(camera_idx: i32) -> CameraInfo {
             libasi_sys::ASI_BAYER_PATTERN_ASI_BAYER_GB => BayerPattern::GB,
             _ => panic!("Unrecognized bayer pattern"),
         },
-        bit_depth: camera_info.BitDepth,
+        bit_depth: camera_info
+            .BitDepth
+            .try_into()
+            .expect("Could not fit bit depth into u32"),
         is_trigger_cam: match camera_info.IsTriggerCam {
             libasi_sys::ASI_BOOL_ASI_FALSE => false,
             libasi_sys::ASI_BOOL_ASI_TRUE => true,
@@ -175,4 +184,93 @@ pub fn get_controls(camera_id: i32) -> Vec<CameraControl> {
     }
 
     controls
+}
+
+#[derive(Debug)]
+pub struct AsiImage {
+    pub image_data: Vec<u8>,
+}
+
+#[derive(Debug)]
+pub enum AsiError {
+    GenericError(String),
+}
+
+pub fn get_snapshot(camera_info: &CameraInfo) -> Result<AsiImage, AsiError> {
+    let mut return_code = unsafe { libasi_sys::ASIStopVideoCapture(camera_info.camera_id) };
+    if return_code != 0 {
+        return Err(AsiError::GenericError(format!(
+            "Could not stop video mode, return code: {}",
+            return_code
+        )));
+    }
+
+    return_code = unsafe { libasi_sys::ASIStartExposure(camera_info.camera_id, 0) };
+    if return_code != 0 {
+        return Err(AsiError::GenericError(format!(
+            "Could not start exposure, return code: {}",
+            return_code
+        )));
+    }
+
+    loop {
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        let mut exp_status: libasi_sys::ASI_EXPOSURE_STATUS = 0;
+
+        return_code =
+            unsafe { libasi_sys::ASIGetExpStatus(camera_info.camera_id, &mut exp_status) };
+        if return_code != 0 {
+            return Err(AsiError::GenericError(String::from(format!(
+                "Failed to get exposure status, return code: {}",
+                return_code
+            ))));
+        }
+
+        match exp_status {
+            libasi_sys::ASI_EXPOSURE_STATUS_ASI_EXP_WORKING => continue,
+            libasi_sys::ASI_EXPOSURE_STATUS_ASI_EXP_SUCCESS => break,
+            libasi_sys::ASI_EXPOSURE_STATUS_ASI_EXP_FAILED => {
+                return Err(AsiError::GenericError(String::from("Exposure failed")))
+            }
+            libasi_sys::ASI_EXPOSURE_STATUS_ASI_EXP_IDLE => {
+                return Err(AsiError::GenericError(String::from(
+                    "Camera unexpectedly idle during exposure",
+                )))
+            }
+            _ => panic!("Unexpected return code from ASIGetExpStatus"),
+        };
+    }
+
+    let buffer_size: usize = match camera_info.is_color_cam {
+        true => (camera_info.max_width * camera_info.max_height * 3)
+            .try_into()
+            .unwrap(),
+        false => match camera_info.bit_depth {
+            0..=8 => (camera_info.max_width * camera_info.max_height)
+                .try_into()
+                .unwrap(),
+            _ => (2 * camera_info.max_width * camera_info.max_height)
+                .try_into()
+                .unwrap(),
+        },
+    };
+
+    let mut buffer = vec![0u8; buffer_size];
+
+    return_code = unsafe {
+        libasi_sys::ASIGetDataAfterExp(
+            camera_info.camera_id,
+            buffer.as_mut_ptr(),
+            buffer_size.try_into().unwrap(),
+        )
+    };
+
+    if return_code != 0 {
+        return Err(AsiError::GenericError(format!(
+            "Could not get exposure data, return code: {}",
+            return_code
+        )));
+    }
+
+    Ok(AsiImage { image_data: buffer })
 }
