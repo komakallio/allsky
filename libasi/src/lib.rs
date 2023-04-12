@@ -166,7 +166,7 @@ pub fn get_controls(camera_id: i32) -> Vec<CameraControl> {
             );
         }
 
-        let cap_name_vector = capability
+        let capabilities = capability
             .Name
             .iter()
             .cloned()
@@ -175,7 +175,7 @@ pub fn get_controls(camera_id: i32) -> Vec<CameraControl> {
 
         controls.push(CameraControl {
             control_index: i,
-            name: String::from_utf8(cap_name_vector).unwrap_or(String::from("Invalid name")),
+            name: String::from_utf8(capabilities).unwrap_or(String::from("Invalid name")),
             value: value,
             can_auto_adjust: capability.IsAutoSupported > 0,
             is_auto_adjusted: auto > 0,
