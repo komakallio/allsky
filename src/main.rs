@@ -21,11 +21,20 @@ fn main() {
 
     println!("Taking picture!");
     let image_format = libasi::ImageFormat::RGB24;
-    let _result = libasi::get_snapshot(&camera_info, &image_format).unwrap();
+    let result = libasi::get_snapshot(&camera_info, &image_format).unwrap();
 
     println!(
         "Closing camera {} with ID {}",
         camera_info.name, camera_info.camera_id
     );
     libasi::close_camera(camera_info.camera_id);
+
+    image::save_buffer(
+        "image.tif",
+        &result.image_data,
+        camera_info.max_width,
+        camera_info.max_height,
+        image::ColorType::Rgb8,
+    )
+    .unwrap();
 }

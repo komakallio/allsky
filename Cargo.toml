@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 libasi = { version = "0.1.0", path = "./libasi" }
+image = "0.24.6"
