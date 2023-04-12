@@ -20,7 +20,8 @@ fn main() {
     }
 
     println!("Taking picture!");
-    let _result = libasi::get_snapshot(&camera_info).unwrap();
+    let image_format = libasi::ImageFormat::RGB24;
+    let _result = libasi::get_snapshot(&camera_info, &image_format).unwrap();
 
     println!(
         "Closing camera {} with ID {}",

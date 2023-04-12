@@ -187,6 +187,32 @@ pub fn get_controls(camera_id: i32) -> Vec<CameraControl> {
 }
 
 #[derive(Debug)]
+pub enum ImageFormat {
+    RAW8,
+    RGB24,
+    RAW16,
+    Y8,
+}
+
+fn set_format(camera_info: &CameraInfo, format: &ImageFormat) {
+    let img_type: libasi_sys::ASI_IMG_TYPE = match format {
+        ImageFormat::RAW8 => libasi_sys::ASI_IMG_TYPE_ASI_IMG_RAW8,
+        ImageFormat::RGB24 => libasi_sys::ASI_IMG_TYPE_ASI_IMG_RGB24,
+        ImageFormat::RAW16 => libasi_sys::ASI_IMG_TYPE_ASI_IMG_RAW16,
+        ImageFormat::Y8 => libasi_sys::ASI_IMG_TYPE_ASI_IMG_Y8,
+    };
+    unsafe {
+        libasi_sys::ASISetROIFormat(
+            camera_info.camera_id,
+            camera_info.max_width as i32,
+            camera_info.max_height as i32,
+            1,
+            img_type,
+        );
+    }
+}
+
+#[derive(Debug)]
 pub struct AsiImage {
     pub image_data: Vec<u8>,
 }
@@ -196,7 +222,7 @@ pub enum AsiError {
     GenericError(String),
 }
 
-pub fn get_snapshot(camera_info: &CameraInfo) -> Result<AsiImage, AsiError> {
+pub fn get_snapshot(camera_info: &CameraInfo, format: &ImageFormat) -> Result<AsiImage, AsiError> {
     let mut return_code = unsafe { libasi_sys::ASIStopVideoCapture(camera_info.camera_id) };
     if return_code != 0 {
         return Err(AsiError::GenericError(format!(
@@ -204,6 +230,8 @@ pub fn get_snapshot(camera_info: &CameraInfo) -> Result<AsiImage, AsiError> {
             return_code
         )));
     }
+
+    set_format(camera_info, format);
 
     return_code = unsafe { libasi_sys::ASIStartExposure(camera_info.camera_id, 0) };
     if return_code != 0 {
@@ -241,11 +269,11 @@ pub fn get_snapshot(camera_info: &CameraInfo) -> Result<AsiImage, AsiError> {
         };
     }
 
-    let buffer_size: usize = match camera_info.is_color_cam {
-        true => (camera_info.max_width * camera_info.max_height * 3)
+    let buffer_size: usize = match format {
+        ImageFormat::RGB24 => (camera_info.max_width * camera_info.max_height * 3)
             .try_into()
             .unwrap(),
-        false => match camera_info.bit_depth {
+        _ => match camera_info.bit_depth {
             0..=8 => (camera_info.max_width * camera_info.max_height)
                 .try_into()
                 .unwrap(),
