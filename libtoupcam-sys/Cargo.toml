@@ -1,0 +1,13 @@
+[package]
+name = "libtoupcam-sys"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "libtoupcam_sys"
+path = "lib.rs"
+
+[dependencies]
+
+[build-dependencies]
+bindgen = "0.71.1"
