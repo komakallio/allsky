@@ -13,14 +13,23 @@ fn main() {
             break;
         }
 
-        let displayname = String::from_utf16_lossy(&cam_array[i].displayname)
-            .trim_matches('\0')
-            .to_string();
-
-        let id = String::from_utf16_lossy(&cam_array[i].id)
-            .trim_matches('\0')
-            .to_string();
+        let displayname = characters_to_string(&cam_array[i].displayname);
+        let id = characters_to_string(&cam_array[i].id);
 
         println!("Camera {}: {} - {}", i, id, displayname);
     }
+}
+
+#[cfg(target_family = "windows")]
+fn characters_to_string(characters: &[std::os::raw::c_ushort]) -> String {
+    String::from_utf16_lossy(characters)
+        .trim_matches('\0')
+        .to_string()
+}
+
+#[cfg(not(target_family = "windows"))]
+fn characters_to_string(characters: &[std::os::raw::c_char]) -> String {
+    String::from_utf8_lossy(characters)
+        .trim_matches('\0')
+        .to_string()
 }
