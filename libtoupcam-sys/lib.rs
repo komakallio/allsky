@@ -6,3 +6,7 @@
 )]
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+
+pub fn TDIBWIDTHBYTES(bits: i32) -> i32 {
+    ((bits + 31) & (!31)) / 8
+}
