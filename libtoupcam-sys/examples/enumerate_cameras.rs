@@ -2,10 +2,9 @@ use libtoupcam_sys::{TOUPCAM_MAX, Toupcam_EnumV2, ToupcamDeviceV2};
 
 fn main() {
     let cam_count = unsafe { libtoupcam_sys::Toupcam_EnumV2(std::ptr::null_mut()) };
-    println!("Found {} cameras", cam_count);
+    println!("Found {cam_count} cameras");
 
-    let mut cam_array: [ToupcamDeviceV2; TOUPCAM_MAX as usize] =
-        [unsafe { std::mem::zeroed() }; TOUPCAM_MAX as usize];
+    let mut cam_array = [unsafe { std::mem::zeroed::<ToupcamDeviceV2>() }; TOUPCAM_MAX as usize];
     unsafe { Toupcam_EnumV2(cam_array.as_mut_ptr()) };
 
     for i in 0..TOUPCAM_MAX as usize {
@@ -16,7 +15,7 @@ fn main() {
         let displayname = characters_to_string(&cam_array[i].displayname);
         let id = characters_to_string(&cam_array[i].id);
 
-        println!("Camera {}: {} - {}", i, id, displayname);
+        println!("Camera {i}: {id} - {displayname}");
     }
 }
 
