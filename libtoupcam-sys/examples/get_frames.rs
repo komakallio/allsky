@@ -36,12 +36,6 @@ fn main() {
 
     println!("Camera opened successfully!");
 
-    unsafe {
-        Toupcam_put_AutoExpoEnable(cam, 0);
-        Toupcam_put_ExpoTime(cam, 100_000);
-        Toupcam_put_ExpoAGain(cam, 100);
-    }
-
     let mut width = 0;
     let mut height = 0;
 
