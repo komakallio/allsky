@@ -52,7 +52,7 @@ fn main() {
 
     println!("Camera size: {width} x {height}");
 
-    let image_buffer_length = TDIBWIDTHBYTES(24 * width) * height;
+    let image_buffer_length = dib_width_bytes(24 * width) * height;
     let image_buffer = vec![0u8; image_buffer_length as usize];
 
     let mut callback_context = CallbackContext { cam, image_buffer };

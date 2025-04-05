@@ -7,6 +7,19 @@
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
-pub fn TDIBWIDTHBYTES(bits: i32) -> i32 {
-    ((bits + 31) & (!31)) / 8
+/// Calculate bytes per image width, making sure the width
+/// is aligned to the closest 32-bit (4-byte) boundary, to be
+/// compatible with the Device Independent Bitmap (DIB) format.
+/// This is equal to the TDIBWIDTHBYTES macro in the the
+/// Toupcam SDK.
+///
+/// # Arguments
+///
+/// * `width_bits` - The width of the image in bits.
+///
+/// # Returns
+///
+/// * The width of the image in bytes, aligned to the closest 32-bit (4-byte) boundary.
+pub fn dib_width_bytes(width_bits: i32) -> i32 {
+    ((width_bits + 31) / 32) * 4
 }
