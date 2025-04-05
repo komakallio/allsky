@@ -50,14 +50,14 @@ fn main() {
 
     unsafe { Toupcam_get_Size(cam, &mut width, &mut height) };
 
-    println!("Camera size: {} x {}", width, height);
+    println!("Camera size: {width} x {height}");
 
     let image_buffer_length = TDIBWIDTHBYTES(24 * width) * height;
     let image_buffer = vec![0u8; image_buffer_length as usize];
 
     let mut callback_context = CallbackContext { cam, image_buffer };
 
-    println!("Image buffer length: {}", image_buffer_length);
+    println!("Image buffer length: {image_buffer_length}");
     println!("Starting image pull mode for 5 seconds...");
 
     thread::sleep(time::Duration::from_secs(1));
