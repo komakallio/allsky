@@ -1,4 +1,5 @@
 use libtoupcam_sys::*;
+use std::{thread, time};
 
 extern "C" fn callback(event: std::os::raw::c_uint, ctx: *mut std::os::raw::c_void) {
     let callback_context = unsafe { &mut *(ctx as *mut CallbackContext) };
@@ -48,8 +49,14 @@ fn main() {
 
     let mut callback_context = CallbackContext { cam, image_buffer };
 
-    println!("Press Enter to start streaming and stop streaming");
-    wait_for_keypress();
+    println!(
+        "Camera opened successfully! Width: {}, Height: {}",
+        width, height
+    );
+    println!("Image buffer length: {}", image_buffer_length);
+    println!("Starting image pull mode for 5 seconds...");
+
+    thread::sleep(time::Duration::from_secs(2));
 
     unsafe {
         Toupcam_StartPullModeWithCallback(
@@ -59,11 +66,7 @@ fn main() {
         )
     };
 
-    wait_for_keypress();
+    thread::sleep(time::Duration::from_secs(5));
 
     unsafe { Toupcam_Close(cam) };
-}
-
-fn wait_for_keypress() {
-    let _ = ::std::io::stdin().read_line(&mut String::new()).unwrap();
 }
