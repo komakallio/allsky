@@ -19,7 +19,16 @@ extern "C" fn callback(event: std::os::raw::c_uint, ctx: *mut std::os::raw::c_vo
         };
         println!("Return code: {return_code}");
         println!("Image metadata: {:?}", frame_info.v3);
+
+        let mut exposure_time: u32 = 0;
+        let mut gain: u16 = 0;
+        unsafe {
+            Toupcam_get_ExpoTime(callback_context.cam, &mut exposure_time);
+            Toupcam_get_ExpoAGain(callback_context.cam, &mut gain);
+        }
+        println!("Exposure time {exposure_time} us, gain {gain}");
     }
+    println!();
 }
 
 struct CallbackContext {
