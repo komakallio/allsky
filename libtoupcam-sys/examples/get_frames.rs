@@ -3,7 +3,8 @@ use std::{thread, time};
 
 extern "C" fn callback(event: std::os::raw::c_uint, ctx: *mut std::os::raw::c_void) {
     let callback_context = unsafe { &mut *(ctx as *mut CallbackContext) };
-    println!("Callback event received: {event}");
+    let event_string = event_to_string(event);
+    println!("Callback event received: {event_string}");
     if event == TOUPCAM_EVENT_IMAGE {
         let mut frame_info: ToupcamFrameInfoV4 = unsafe { std::mem::zeroed() };
         let return_code = unsafe {
@@ -33,6 +34,8 @@ fn main() {
         return;
     }
 
+    println!("Camera opened successfully!");
+
     unsafe {
         Toupcam_put_AutoExpoEnable(cam, 0);
         Toupcam_put_ExpoTime(cam, 100_000);
@@ -44,19 +47,17 @@ fn main() {
 
     unsafe { Toupcam_get_Size(cam, &mut width, &mut height) };
 
+    println!("Camera size: {} x {}", width, height);
+
     let image_buffer_length = TDIBWIDTHBYTES(24 * width) * height;
     let image_buffer = vec![0u8; image_buffer_length as usize];
 
     let mut callback_context = CallbackContext { cam, image_buffer };
 
-    println!(
-        "Camera opened successfully! Width: {}, Height: {}",
-        width, height
-    );
     println!("Image buffer length: {}", image_buffer_length);
     println!("Starting image pull mode for 5 seconds...");
 
-    thread::sleep(time::Duration::from_secs(2));
+    thread::sleep(time::Duration::from_secs(1));
 
     unsafe {
         Toupcam_StartPullModeWithCallback(
@@ -69,4 +70,35 @@ fn main() {
     thread::sleep(time::Duration::from_secs(5));
 
     unsafe { Toupcam_Close(cam) };
+}
+
+fn event_to_string(event_type: u32) -> &'static str {
+    match event_type {
+        TOUPCAM_EVENT_EXPOSURE => "Exposure time or gain changed",
+        TOUPCAM_EVENT_TEMPTINT => "White balance changed (Temp/Tint mode)",
+        TOUPCAM_EVENT_IMAGE => "Live image arrived",
+        TOUPCAM_EVENT_STILLIMAGE => "Snap (still) frame arrived",
+        TOUPCAM_EVENT_WBGAIN => "White balance changed (RGB Gain mode)",
+        TOUPCAM_EVENT_TRIGGERFAIL => "Trigger failed",
+        TOUPCAM_EVENT_BLACK => "Black balance changed",
+        TOUPCAM_EVENT_FFC => "Flat field correction status changed",
+        TOUPCAM_EVENT_DFC => "Dark field correction status changed",
+        TOUPCAM_EVENT_ROI => "ROI changed",
+        TOUPCAM_EVENT_LEVELRANGE => "Level range changed",
+        TOUPCAM_EVENT_AUTOEXPO_CONV => "Auto exposure convergence",
+        TOUPCAM_EVENT_AUTOEXPO_CONVFAIL => "Auto exposure once mode convergence failed",
+        TOUPCAM_EVENT_FPNC => "Fix pattern noise correction status changed",
+        TOUPCAM_EVENT_ERROR => "Generic error",
+        TOUPCAM_EVENT_DISCONNECTED => "Camera disconnected",
+        TOUPCAM_EVENT_NOFRAMETIMEOUT => "No frame timeout error",
+        TOUPCAM_EVENT_FOCUSPOS => "Focus position",
+        TOUPCAM_EVENT_NOPACKETTIMEOUT => "No packet timeout",
+        TOUPCAM_EVENT_EXPO_START => "Hardware event: exposure start",
+        TOUPCAM_EVENT_EXPO_STOP => "Hardware event: exposure stop",
+        TOUPCAM_EVENT_TRIGGER_ALLOW => "Hardware event: next trigger allow",
+        TOUPCAM_EVENT_HEARTBEAT => "Hardware event: heartbeat",
+        TOUPCAM_EVENT_TRIGGER_IN => "Hardware event: trigger in",
+        TOUPCAM_EVENT_FACTORY => "Restore factory settings",
+        _ => "Unknown event",
+    }
 }
