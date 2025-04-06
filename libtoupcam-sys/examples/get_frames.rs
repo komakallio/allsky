@@ -1,7 +1,8 @@
 use libtoupcam_sys::*;
+use std::os::raw::{c_uint, c_void};
 use std::{thread, time};
 
-extern "C" fn callback(event: std::os::raw::c_uint, ctx: *mut std::os::raw::c_void) {
+extern "C" fn callback(event: c_uint, ctx: *mut c_void) {
     let callback_context = unsafe { &mut *(ctx as *mut CallbackContext) };
     let event_string = event_to_string(event);
     println!("Callback event received: {event_string}");
@@ -10,7 +11,7 @@ extern "C" fn callback(event: std::os::raw::c_uint, ctx: *mut std::os::raw::c_vo
         let return_code = unsafe {
             Toupcam_PullImageV4(
                 callback_context.cam as HToupCam,
-                callback_context.image_buffer.as_mut_ptr() as *mut std::os::raw::c_void,
+                callback_context.image_buffer.as_mut_ptr() as *mut c_void,
                 0,
                 0,
                 0,
@@ -66,7 +67,7 @@ fn main() {
         Toupcam_StartPullModeWithCallback(
             cam,
             Some(callback),
-            &mut callback_context as *mut CallbackContext as *mut std::os::raw::c_void,
+            &mut callback_context as *mut CallbackContext as *mut c_void,
         )
     };
 
