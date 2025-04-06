@@ -46,6 +46,9 @@ fn main() {
 
     println!("Camera opened successfully!");
 
+    let camera_model = unsafe { &*Toupcam_query_Model(cam) };
+    println!("Camera model: {:?}", camera_model);
+
     let mut width = 0;
     let mut height = 0;
 
