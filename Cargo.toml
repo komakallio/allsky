@@ -7,3 +7,4 @@ edition = "2024"
 
 [dependencies]
 libtoupcam = { path = "./libtoupcam" }
+ctrlc = "3.4.6"
