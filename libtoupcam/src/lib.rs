@@ -1,10 +1,5 @@
 use libtoupcam_sys as toup;
 
-#[cfg(not(target_family = "windows"))]
-use std::os::raw::c_chart;
-#[cfg(target_family = "windows")]
-use std::os::raw::c_ushort;
-
 #[derive(Debug)]
 pub struct ToupcamDevice {
     pub id: String,
@@ -42,14 +37,14 @@ pub fn close(cam: toup::HToupCam) {
 }
 
 #[cfg(target_family = "windows")]
-fn characters_to_string(characters: &[c_ushort]) -> String {
+fn characters_to_string(characters: &[std::os::raw::c_ushort]) -> String {
     String::from_utf16_lossy(characters)
         .trim_matches('\0')
         .to_string()
 }
 
 #[cfg(not(target_family = "windows"))]
-fn characters_to_string(characters: &[c_char]) -> String {
+fn characters_to_string(characters: &[std::os::raw::c_char]) -> String {
     String::from_utf8_lossy(characters)
         .trim_matches('\0')
         .to_string()
