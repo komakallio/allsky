@@ -4,8 +4,6 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-const RING_BUFFER_CAPACITY: usize = 10;
-
 fn main() {
     let cameras = libtoupcam::enumerate_cameras();
     println!("Found {} cameras", cameras.len());
@@ -19,7 +17,7 @@ fn main() {
     set_ctrlc_handler(Arc::clone(&running));
 
     // Dummy ring buffer
-    let ring_buffer = Arc::new(Mutex::new(RingBuffer::new(RING_BUFFER_CAPACITY)));
+    let ring_buffer = Arc::new(Mutex::new(RingBuffer::new(10)));
 
     let camera_thread = start_camera_thread(Arc::clone(&running), Arc::clone(&ring_buffer));
 
