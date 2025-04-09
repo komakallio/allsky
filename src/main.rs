@@ -13,9 +13,7 @@ fn main() {
     set_ctrlc_handler(Arc::clone(&running));
 
     // Dummy ring buffer
-    let ring_buffer = Arc::new(Mutex::new(VecDeque::<Image>::with_capacity(
-        RING_BUFFER_SIZE,
-    )));
+    let ring_buffer = Arc::new(Mutex::new(RingBuffer::new(RING_BUFFER_SIZE)));
 
     let camera_thread = start_camera_thread(Arc::clone(&running), Arc::clone(&ring_buffer));
     camera_thread.join().expect("Camera thread panicked!");
@@ -31,7 +29,7 @@ fn set_ctrlc_handler(running: Arc<AtomicBool>) {
 
 fn start_camera_thread(
     running: Arc<AtomicBool>,
-    ring_buffer: Arc<Mutex<VecDeque<Image>>>,
+    ring_buffer: Arc<Mutex<RingBuffer<Image>>>,
 ) -> thread::JoinHandle<()> {
     let camera_thread = thread::spawn(move || {
         let cam = open_camera();
@@ -40,12 +38,7 @@ fn start_camera_thread(
             println!("Camera thread is working...");
             {
                 let mut b = ring_buffer.lock().unwrap();
-                if b.len() >= RING_BUFFER_SIZE {
-                    println!("Popping image off buffer");
-                    b.pop_front();
-                }
-                println!("Pushing image onto buffer");
-                b.push_back(Image::new());
+                b.add(Image::new());
             }
             thread::sleep(Duration::from_secs(1));
         }
@@ -54,6 +47,27 @@ fn start_camera_thread(
         println!("Camera thread exited cleanly.");
     });
     camera_thread
+}
+
+struct RingBuffer<T> {
+    internal_queue: VecDeque<T>,
+    buffer_length: usize,
+}
+
+impl<T> RingBuffer<T> {
+    fn new(buffer_length: usize) -> Self {
+        Self {
+            internal_queue: VecDeque::<T>::with_capacity(buffer_length),
+            buffer_length: buffer_length,
+        }
+    }
+
+    fn add(&mut self, item: T) {
+        if self.internal_queue.len() >= self.buffer_length {
+            _ = self.internal_queue.pop_front();
+        }
+        self.internal_queue.push_back(item);
+    }
 }
 
 struct Camera {}
