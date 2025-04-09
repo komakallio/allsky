@@ -29,7 +29,7 @@ pub fn enumerate_cameras() -> Vec<ToupcamDevice> {
     cameras
 }
 
-pub fn open() -> toup::HToupCam {
+pub fn open_first() -> toup::HToupCam {
     unsafe { toup::Toupcam_Open(std::ptr::null_mut()) }
 }
 
