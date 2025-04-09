@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-const RING_BUFFER_SIZE: usize = 10;
+const RING_BUFFER_CAPACITY: usize = 10;
 
 fn main() {
     // Flag used to signal all threads to stop working
@@ -13,7 +13,7 @@ fn main() {
     set_ctrlc_handler(Arc::clone(&running));
 
     // Dummy ring buffer
-    let ring_buffer = Arc::new(Mutex::new(RingBuffer::new(RING_BUFFER_SIZE)));
+    let ring_buffer = Arc::new(Mutex::new(RingBuffer::new(RING_BUFFER_CAPACITY)));
 
     let camera_thread = start_camera_thread(Arc::clone(&running), Arc::clone(&ring_buffer));
 
@@ -71,19 +71,19 @@ fn start_analysis_thread(
 
 struct RingBuffer<T> {
     internal_queue: VecDeque<T>,
-    buffer_length: usize,
+    capacity: usize,
 }
 
 impl<T> RingBuffer<T> {
-    fn new(buffer_length: usize) -> Self {
+    fn new(capacity: usize) -> Self {
         Self {
-            internal_queue: VecDeque::<T>::with_capacity(buffer_length),
-            buffer_length: buffer_length,
+            internal_queue: VecDeque::<T>::with_capacity(capacity),
+            capacity,
         }
     }
 
     fn add(&mut self, item: T) {
-        if self.internal_queue.len() >= self.buffer_length {
+        if self.internal_queue.len() >= self.capacity {
             _ = self.internal_queue.pop_front();
         }
         self.internal_queue.push_back(item);
