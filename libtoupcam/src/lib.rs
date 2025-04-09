@@ -54,6 +54,18 @@ pub fn stop(cam: toup::HToupCam) -> toup::HRESULT {
     unsafe { toup::Toupcam_Stop(cam) }
 }
 
+pub fn get_exposure_time(cam: toup::HToupCam) -> u32 {
+    let mut exposure_time: u32 = 0;
+    unsafe { toup::Toupcam_get_ExpoTime(cam, &mut exposure_time) };
+    exposure_time
+}
+
+pub fn get_gain(cam: toup::HToupCam) -> u16 {
+    let mut gain: u16 = 0;
+    unsafe { toup::Toupcam_get_ExpoAGain(cam, &mut gain) };
+    gain
+}
+
 #[cfg(target_family = "windows")]
 fn characters_to_string(characters: &[std::os::raw::c_ushort]) -> String {
     String::from_utf16_lossy(characters)
