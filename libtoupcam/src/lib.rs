@@ -39,10 +39,14 @@ pub fn close(cam: toup::HToupCam) {
 pub fn start_pull_mode<T>(
     cam: toup::HToupCam,
     callback: toup::PTOUPCAM_EVENT_CALLBACK,
-    context: *mut T,
+    context: &mut T,
 ) -> toup::HRESULT {
     unsafe {
-        toup::Toupcam_StartPullModeWithCallback(cam, callback, context as *mut std::os::raw::c_void)
+        toup::Toupcam_StartPullModeWithCallback(
+            cam,
+            callback,
+            context as *mut T as *mut std::os::raw::c_void,
+        )
     }
 }
 
