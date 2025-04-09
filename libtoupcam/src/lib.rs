@@ -36,6 +36,20 @@ pub fn close(cam: toup::HToupCam) {
     unsafe { toup::Toupcam_Close(cam) }
 }
 
+pub fn start_pull_mode<T>(
+    cam: toup::HToupCam,
+    callback: toup::PTOUPCAM_EVENT_CALLBACK,
+    context: *mut T,
+) -> toup::HRESULT {
+    unsafe {
+        toup::Toupcam_StartPullModeWithCallback(cam, callback, context as *mut std::os::raw::c_void)
+    }
+}
+
+pub fn stop(cam: toup::HToupCam) -> toup::HRESULT {
+    unsafe { toup::Toupcam_Stop(cam) }
+}
+
 #[cfg(target_family = "windows")]
 fn characters_to_string(characters: &[std::os::raw::c_ushort]) -> String {
     String::from_utf16_lossy(characters)
