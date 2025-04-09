@@ -7,6 +7,12 @@ use std::time::Duration;
 const RING_BUFFER_CAPACITY: usize = 10;
 
 fn main() {
+    let cameras = libtoupcam::enumerate_cameras();
+    println!("Found {} cameras", cameras.len());
+    cameras.iter().for_each(|camera| {
+        println!("{:?}", camera);
+    });
+
     // Flag used to signal all threads to stop working
     let running = Arc::new(AtomicBool::new(true));
 
