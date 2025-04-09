@@ -50,6 +50,26 @@ pub fn start_pull_mode<T>(
     }
 }
 
+pub fn pull_image(
+    cam: toup::HToupCam,
+    buffer: &mut [u8],
+    still: bool,
+    bits: usize,
+    row_pitch: usize,
+) -> toup::HRESULT {
+    let mut frame_info = unsafe { std::mem::zeroed::<toup::ToupcamFrameInfoV4>() };
+    unsafe {
+        toup::Toupcam_PullImageV4(
+            cam,
+            buffer.as_mut_ptr() as *mut std::os::raw::c_void,
+            still as i32,
+            bits as i32,
+            row_pitch as i32,
+            &mut frame_info,
+        )
+    }
+}
+
 pub fn stop(cam: toup::HToupCam) -> toup::HRESULT {
     unsafe { toup::Toupcam_Stop(cam) }
 }
