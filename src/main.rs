@@ -40,7 +40,14 @@ fn start_camera_thread(
     ring_buffer: Arc<Mutex<RingBuffer<Image>>>,
 ) -> thread::JoinHandle<()> {
     thread::spawn(move || {
-        let cam = open_camera();
+        let cam = libtoupcam::open_first();
+        println!(
+            "Available resolutions: {:?}",
+            libtoupcam::get_resolutions(cam)
+        );
+
+        libtoupcam::set_resolution_by_index(cam, 1);
+        println!("Current gain: {:?}", libtoupcam::get_gain(cam));
 
         while running.load(Ordering::SeqCst) {
             {
@@ -51,7 +58,7 @@ fn start_camera_thread(
             thread::sleep(Duration::from_millis(250));
         }
 
-        close_camera(cam);
+        libtoupcam::close(cam);
         println!("Camera thread exited cleanly.");
     })
 }
@@ -96,22 +103,6 @@ impl<T> RingBuffer<T> {
     fn get_contents(&mut self) -> &[T] {
         self.internal_queue.make_contiguous()
     }
-}
-
-struct Camera {}
-impl Camera {
-    fn new() -> Self {
-        Self {}
-    }
-}
-
-fn close_camera(_cam: Camera) {
-    // TODO: Implement camera closing logic
-}
-
-fn open_camera() -> Camera {
-    // TODO: Implement camera opening logic
-    Camera::new()
 }
 
 #[derive(Debug)]
