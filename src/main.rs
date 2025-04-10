@@ -6,6 +6,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 
 mod analysis;
+mod camera;
 mod ctrlc_handler;
 mod image;
 mod image_capture;

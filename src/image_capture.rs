@@ -1,3 +1,4 @@
+use crate::camera::{Camera, toupcam};
 use crate::image::Image;
 use crate::ring_buffer::RingBuffer;
 use std::sync::Arc;
@@ -11,14 +12,8 @@ pub(crate) fn start_camera_thread(
     ring_buffer: Arc<Mutex<RingBuffer<Image>>>,
 ) -> thread::JoinHandle<()> {
     thread::spawn(move || {
-        let cam = libtoupcam::open_first();
-        println!(
-            "Available resolutions: {:?}",
-            libtoupcam::get_resolutions(cam)
-        );
-
-        libtoupcam::set_resolution_by_index(cam, 1);
-        println!("Current gain: {:?}", libtoupcam::get_gain(cam));
+        let cam = toupcam::ToupcamDevice::new();
+        cam.open();
 
         while running.load(Ordering::SeqCst) {
             {
@@ -29,7 +24,7 @@ pub(crate) fn start_camera_thread(
             thread::sleep(Duration::from_millis(250));
         }
 
-        libtoupcam::close(cam);
+        cam.close();
         println!("Camera thread exited cleanly.");
     })
 }
