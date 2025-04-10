@@ -12,7 +12,16 @@ pub(crate) fn start_camera_thread(
     ring_buffer: Arc<Mutex<RingBuffer<Image>>>,
 ) -> thread::JoinHandle<()> {
     thread::spawn(move || {
-        let cam = toupcam::ToupcamDevice::new();
+        let mut found_devices = toupcam::ToupcamDevice::enumerate_devices();
+        found_devices.iter().for_each(|device| {
+            println!(
+                "Found camera: {} (ID: {})",
+                device.get_name(),
+                device.get_id()
+            );
+        });
+        println!("Picking first camera");
+        let cam = found_devices.first_mut().expect("No cameras found!");
         cam.open();
 
         while running.load(Ordering::SeqCst) {

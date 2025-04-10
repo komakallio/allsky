@@ -6,6 +6,11 @@ pub struct ToupcamDevice {
     pub display_name: String,
 }
 
+#[derive(Debug)]
+pub struct ToupcamHandle {
+    handle: toup::HToupCam,
+}
+
 pub fn enumerate_cameras() -> Vec<ToupcamDevice> {
     let mut cam_array =
         [unsafe { std::mem::zeroed::<toup::ToupcamDeviceV2>() }; toup::TOUPCAM_MAX as usize];
@@ -24,20 +29,28 @@ pub fn enumerate_cameras() -> Vec<ToupcamDevice> {
     cameras
 }
 
-pub fn open_first() -> toup::HToupCam {
-    unsafe { toup::Toupcam_Open(std::ptr::null_mut()) }
+pub fn open_first() -> ToupcamHandle {
+    unsafe {
+        ToupcamHandle {
+            handle: toup::Toupcam_Open(std::ptr::null_mut()),
+        }
+    }
 }
 
-pub fn open_by_index(index: usize) -> toup::HToupCam {
-    unsafe { toup::Toupcam_OpenByIndex(index as u32) }
+pub fn open_by_index(index: usize) -> ToupcamHandle {
+    unsafe {
+        ToupcamHandle {
+            handle: toup::Toupcam_OpenByIndex(index as u32),
+        }
+    }
 }
 
-pub fn close(cam: toup::HToupCam) {
-    unsafe { toup::Toupcam_Close(cam) }
+pub fn close(cam: ToupcamHandle) {
+    unsafe { toup::Toupcam_Close(cam.handle) }
 }
 
-pub fn get_resolutions(cam: toup::HToupCam) -> Vec<(u32, u32)> {
-    let camera_model = unsafe { &*toup::Toupcam_query_Model(cam) };
+pub fn get_resolutions(cam: ToupcamHandle) -> Vec<(u32, u32)> {
+    let camera_model = unsafe { &*toup::Toupcam_query_Model(cam.handle) };
     camera_model
         .res
         .iter()
@@ -46,22 +59,22 @@ pub fn get_resolutions(cam: toup::HToupCam) -> Vec<(u32, u32)> {
         .collect()
 }
 
-pub fn set_resolution_by_index(cam: toup::HToupCam, index: usize) {
-    unsafe { toup::Toupcam_put_eSize(cam, index as u32) };
+pub fn set_resolution_by_index(cam: ToupcamHandle, index: usize) {
+    unsafe { toup::Toupcam_put_eSize(cam.handle, index as u32) };
 }
 
-pub fn set_resolution(cam: toup::HToupCam, width: u32, height: u32) {
-    unsafe { toup::Toupcam_put_Size(cam, width as i32, height as i32) };
+pub fn set_resolution(cam: ToupcamHandle, width: u32, height: u32) {
+    unsafe { toup::Toupcam_put_Size(cam.handle, width as i32, height as i32) };
 }
 
 pub fn start_pull_mode<T>(
-    cam: toup::HToupCam,
+    cam: ToupcamHandle,
     callback: toup::PTOUPCAM_EVENT_CALLBACK,
     context: &mut T,
 ) -> toup::HRESULT {
     unsafe {
         toup::Toupcam_StartPullModeWithCallback(
-            cam,
+            cam.handle,
             callback,
             context as *mut T as *mut std::os::raw::c_void,
         )
@@ -69,7 +82,7 @@ pub fn start_pull_mode<T>(
 }
 
 pub fn pull_image(
-    cam: toup::HToupCam,
+    cam: ToupcamHandle,
     buffer: &mut [u8],
     still: bool,
     bits: usize,
@@ -78,7 +91,7 @@ pub fn pull_image(
     let mut frame_info = unsafe { std::mem::zeroed::<toup::ToupcamFrameInfoV4>() };
     unsafe {
         toup::Toupcam_PullImageV4(
-            cam,
+            cam.handle,
             buffer.as_mut_ptr() as *mut std::os::raw::c_void,
             still as i32,
             bits as i32,
@@ -88,19 +101,19 @@ pub fn pull_image(
     }
 }
 
-pub fn stop(cam: toup::HToupCam) -> toup::HRESULT {
-    unsafe { toup::Toupcam_Stop(cam) }
+pub fn stop(cam: ToupcamHandle) -> toup::HRESULT {
+    unsafe { toup::Toupcam_Stop(cam.handle) }
 }
 
-pub fn get_exposure_time(cam: toup::HToupCam) -> u32 {
+pub fn get_exposure_time(cam: ToupcamHandle) -> u32 {
     let mut exposure_time: u32 = 0;
-    unsafe { toup::Toupcam_get_ExpoTime(cam, &mut exposure_time) };
+    unsafe { toup::Toupcam_get_ExpoTime(cam.handle, &mut exposure_time) };
     exposure_time
 }
 
-pub fn get_gain(cam: toup::HToupCam) -> u16 {
+pub fn get_gain(cam: ToupcamHandle) -> u16 {
     let mut gain: u16 = 0;
-    unsafe { toup::Toupcam_get_ExpoAGain(cam, &mut gain) };
+    unsafe { toup::Toupcam_get_ExpoAGain(cam.handle, &mut gain) };
     gain
 }
 
