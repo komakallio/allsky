@@ -36,6 +36,24 @@ pub fn close(cam: toup::HToupCam) {
     unsafe { toup::Toupcam_Close(cam) }
 }
 
+pub fn get_resolutions(cam: toup::HToupCam) -> Vec<(u32, u32)> {
+    let camera_model = unsafe { &*toup::Toupcam_query_Model(cam) };
+    camera_model
+        .res
+        .iter()
+        .filter(|res| res.width > 0 && res.height > 0)
+        .map(|res| (res.width, res.height))
+        .collect()
+}
+
+pub fn set_resolution_by_index(cam: toup::HToupCam, index: usize) {
+    unsafe { toup::Toupcam_put_eSize(cam, index as u32) };
+}
+
+pub fn set_resolution(cam: toup::HToupCam, width: u32, height: u32) {
+    unsafe { toup::Toupcam_put_Size(cam, width as i32, height as i32) };
+}
+
 pub fn start_pull_mode<T>(
     cam: toup::HToupCam,
     callback: toup::PTOUPCAM_EVENT_CALLBACK,
