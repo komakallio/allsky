@@ -1,8 +1,10 @@
-use std::collections::VecDeque;
+use ring_buffer::RingBuffer;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
+
+mod ring_buffer;
 
 fn main() {
     let cameras = libtoupcam::enumerate_cameras();
@@ -78,31 +80,6 @@ fn start_analysis_thread(
         }
         println!("Analysis thread exited cleanly.");
     })
-}
-
-struct RingBuffer<T> {
-    internal_queue: VecDeque<T>,
-    capacity: usize,
-}
-
-impl<T> RingBuffer<T> {
-    fn new(capacity: usize) -> Self {
-        Self {
-            internal_queue: VecDeque::<T>::with_capacity(capacity),
-            capacity,
-        }
-    }
-
-    fn add(&mut self, item: T) {
-        if self.internal_queue.len() >= self.capacity {
-            _ = self.internal_queue.pop_front();
-        }
-        self.internal_queue.push_back(item);
-    }
-
-    fn get_contents(&mut self) -> &[T] {
-        self.internal_queue.make_contiguous()
-    }
 }
 
 #[derive(Debug)]
