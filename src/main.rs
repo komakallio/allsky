@@ -1,4 +1,5 @@
 use crate::ctrlc_handler::set_ctrlc_handler;
+use crate::image::Image;
 use crate::ring_buffer::RingBuffer;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -6,6 +7,7 @@ use std::thread;
 use std::time::Duration;
 
 mod ctrlc_handler;
+mod image;
 mod ring_buffer;
 
 fn main() {
@@ -74,12 +76,4 @@ fn start_analysis_thread(
         }
         println!("Analysis thread exited cleanly.");
     })
-}
-
-#[derive(Debug)]
-struct Image {}
-impl Image {
-    fn new() -> Self {
-        Self {}
-    }
 }
