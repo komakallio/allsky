@@ -1,9 +1,11 @@
+use ctrlc_handler::set_ctrlc_handler;
 use ring_buffer::RingBuffer;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
+mod ctrlc_handler;
 mod ring_buffer;
 
 fn main() {
@@ -27,14 +29,6 @@ fn main() {
 
     camera_thread.join().expect("Camera thread panicked!");
     analysis_thread.join().expect("Analysis thread panicked!");
-}
-
-fn set_ctrlc_handler(running: Arc<AtomicBool>) {
-    ctrlc::set_handler(move || {
-        println!("Received Ctrl+C!");
-        running.store(false, Ordering::SeqCst);
-    })
-    .expect("Error setting Ctrl+C handler");
 }
 
 fn start_camera_thread(
