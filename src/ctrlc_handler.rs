@@ -3,7 +3,7 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
 };
 
-pub fn set_ctrlc_handler(running: Arc<AtomicBool>) {
+pub(crate) fn set_ctrlc_handler(running: Arc<AtomicBool>) {
     ctrlc::set_handler(move || {
         println!("Received Ctrl+C!");
         running.store(false, Ordering::SeqCst);

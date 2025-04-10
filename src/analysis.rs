@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-pub fn start_analysis_thread(
+pub(crate) fn start_analysis_thread(
     running: Arc<AtomicBool>,
     ring_buffer: Arc<Mutex<RingBuffer<Image>>>,
 ) -> thread::JoinHandle<()> {
