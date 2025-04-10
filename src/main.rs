@@ -1,5 +1,5 @@
-use ctrlc_handler::set_ctrlc_handler;
-use ring_buffer::RingBuffer;
+use crate::ctrlc_handler::set_ctrlc_handler;
+use crate::ring_buffer::RingBuffer;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
