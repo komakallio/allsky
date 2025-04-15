@@ -1,6 +1,6 @@
 use crate::image::Image;
 
-use super::Camera;
+use super::{Camera, CameraError};
 
 #[derive(Debug)]
 pub(crate) struct ToupcamDevice {
@@ -42,16 +42,27 @@ impl Camera for ToupcamDevice {
         self.id.clone()
     }
 
-    fn start<F>(&mut self, callback: F)
+    fn start<F>(&mut self, callback: F) -> Result<(), CameraError>
     where
         F: FnMut(&Image) + Send,
     {
         todo!()
     }
 
-    fn stop(&mut self) {
+    fn stop(&mut self) -> Result<(), CameraError> {
         if let Some(handle) = self.handle.take() {
-            libtoupcam::stop(handle);
+            let result = libtoupcam::stop(handle);
+            match result {
+                result if result >= 0 => Ok(()),
+                _ => Err(CameraError::StopError(format!(
+                    "Failed to stop camera, result code: {}",
+                    result
+                ))),
+            }
+        } else {
+            Err(CameraError::StopError(
+                "Failed to stop camera because of missing camera handle".to_string(),
+            ))
         }
     }
 }
