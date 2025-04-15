@@ -1,3 +1,5 @@
+use crate::image::Image;
+
 use super::Camera;
 
 #[derive(Debug)]
@@ -38,6 +40,19 @@ impl Camera for ToupcamDevice {
 
     fn get_id(&self) -> String {
         self.id.clone()
+    }
+
+    fn start<F>(&mut self, callback: F)
+    where
+        F: FnMut(&Image) + Send,
+    {
+        todo!()
+    }
+
+    fn stop(&mut self) {
+        if let Some(handle) = self.handle.take() {
+            libtoupcam::stop(handle);
+        }
     }
 }
 
