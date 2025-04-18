@@ -16,6 +16,6 @@ pub(crate) trait Camera {
     fn close(&mut self);
     fn start<F>(&mut self, callback: F) -> Result<(), CameraError>
     where
-        F: FnMut(&Image) + Send;
+        F: FnMut(&Image) + Send + 'static;
     fn stop(&mut self) -> Result<(), CameraError>;
 }

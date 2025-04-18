@@ -11,6 +11,11 @@ pub struct ToupcamHandle {
     handle: toup::HToupCam,
 }
 
+#[derive(Debug)]
+pub enum EventType {
+    Image = toup::TOUPCAM_EVENT_IMAGE as isize,
+}
+
 pub fn enumerate_cameras() -> Vec<ToupcamDevice> {
     let mut cam_array =
         [unsafe { std::mem::zeroed::<toup::ToupcamDeviceV2>() }; toup::TOUPCAM_MAX as usize];
@@ -68,7 +73,7 @@ pub fn set_resolution(cam: ToupcamHandle, width: u32, height: u32) {
 }
 
 pub fn start_pull_mode<T>(
-    cam: ToupcamHandle,
+    cam: &ToupcamHandle,
     callback: toup::PTOUPCAM_EVENT_CALLBACK,
     context: &mut T,
 ) -> toup::HRESULT {

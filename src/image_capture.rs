@@ -24,6 +24,8 @@ pub(crate) fn start_camera_thread(
         let cam = found_devices.first_mut().expect("No cameras found!");
         cam.open();
 
+        cam.start(|image| {});
+
         while running.load(Ordering::SeqCst) {
             {
                 println!("Camera thread is working...");
@@ -33,6 +35,7 @@ pub(crate) fn start_camera_thread(
             thread::sleep(Duration::from_millis(250));
         }
 
+        cam.stop();
         cam.close();
         println!("Camera thread exited cleanly.");
     })
