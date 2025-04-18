@@ -24,18 +24,28 @@ pub(crate) fn start_camera_thread(
         let cam = found_devices.first_mut().expect("No cameras found!");
         cam.open();
 
-        cam.start(|image| {});
+        let callback = move |image: &Image| {
+            println!("Camera thread callback called!");
+            ring_buffer.lock().unwrap().add(image.clone());
+        };
 
-        while running.load(Ordering::SeqCst) {
-            {
-                println!("Camera thread is working...");
-                let mut b = ring_buffer.lock().unwrap();
-                b.add(Image::new());
+        match cam.start(callback) {
+            Ok(()) => {
+                while running.load(Ordering::SeqCst) {
+                    {
+                        println!("Camera thread is working...");
+                    }
+                    thread::sleep(Duration::from_millis(1000));
+                }
             }
-            thread::sleep(Duration::from_millis(250));
+            Err(err) => {
+                println!("Failed to start camera: {:?}", err);
+            }
         }
 
-        cam.stop();
+        if let Err(err) = cam.stop() {
+            println!("Failed to stop camera: {:?}", err);
+        }
         cam.close();
         println!("Camera thread exited cleanly.");
     })
