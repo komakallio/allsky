@@ -4,6 +4,104 @@ use libtoupcam_sys as toup;
 pub struct ToupcamDevice {
     pub id: String,
     pub display_name: String,
+    handle: Option<toup::HToupCam>,
+}
+
+pub enum ToupcamError {
+    NoHandle,
+}
+
+impl ToupcamDevice {
+    pub fn open(&mut self) {
+        self.handle = Some(unsafe { toup::Toupcam_Open(self.id.as_ptr() as *mut _) });
+    }
+
+    pub fn close(&mut self) -> Result<(), ToupcamError> {
+        let Some(handle) = self.handle else {
+            return Err(ToupcamError::NoHandle);
+        };
+
+        unsafe { toup::Toupcam_Close(handle) };
+        self.handle = None;
+        Ok(())
+    }
+
+    pub fn set_raw_mode(&self, enabled: bool) -> Result<(), ToupcamError> {
+        let Some(handle) = self.handle else {
+            return Err(ToupcamError::NoHandle);
+        };
+
+        let result =
+            unsafe { toup::Toupcam_put_Option(handle, toup::TOUPCAM_OPTION_RAW, enabled as i32) };
+        // TODO: Handle result code
+        Ok(())
+    }
+
+    pub fn get_resolutions(&self) -> Result<Vec<(u32, u32)>, ToupcamError> {
+        let Some(handle) = self.handle else {
+            return Err(ToupcamError::NoHandle);
+        };
+
+        let camera_model = unsafe { &*toup::Toupcam_query_Model(handle) };
+        Ok(camera_model
+            .res
+            .iter()
+            .filter(|res| res.width > 0 && res.height > 0)
+            .map(|res| (res.width, res.height))
+            .collect())
+    }
+
+    pub fn set_resolution_by_index(&self, index: usize) -> Result<(), ToupcamError> {
+        let Some(handle) = self.handle else {
+            return Err(ToupcamError::NoHandle);
+        };
+
+        let result = unsafe { toup::Toupcam_put_eSize(handle, index as u32) };
+        // TODO: Handle result code
+        Ok(())
+    }
+
+    pub fn set_resolution(&self, width: u32, height: u32) -> Result<(), ToupcamError> {
+        let Some(handle) = self.handle else {
+            return Err(ToupcamError::NoHandle);
+        };
+
+        let result = unsafe { toup::Toupcam_put_Size(handle, width as i32, height as i32) };
+        // TODO: Handle result code
+        Ok(())
+    }
+
+    pub fn stop(&self) -> Result<(), ToupcamError> {
+        let Some(handle) = self.handle else {
+            return Err(ToupcamError::NoHandle);
+        };
+
+        let result = unsafe { toup::Toupcam_Stop(handle) };
+        // TODO: Handle result code
+        Ok(())
+    }
+
+    pub fn get_exposure_time(&self) -> Result<u32, ToupcamError> {
+        let Some(handle) = self.handle else {
+            return Err(ToupcamError::NoHandle);
+        };
+
+        let mut exposure_time: u32 = 0;
+        let result = unsafe { toup::Toupcam_get_ExpoTime(handle, &mut exposure_time) };
+        // TODO: Handle result code
+        Ok(exposure_time)
+    }
+
+    pub fn get_gain(&self) -> Result<u16, ToupcamError> {
+        let Some(handle) = self.handle else {
+            return Err(ToupcamError::NoHandle);
+        };
+
+        let mut gain: u16 = 0;
+        let result = unsafe { toup::Toupcam_get_ExpoAGain(handle, &mut gain) };
+        // TODO: Handle result code
+        Ok(gain)
+    }
 }
 
 #[derive(Debug)]
@@ -29,6 +127,7 @@ pub fn enumerate_cameras() -> Vec<ToupcamDevice> {
         cameras.push(ToupcamDevice {
             id: characters_to_string(&cam_array[i].id),
             display_name: characters_to_string(&cam_array[i].displayname),
+            handle: None,
         });
     }
     cameras
