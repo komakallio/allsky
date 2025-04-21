@@ -7,6 +7,7 @@ pub struct ToupcamDevice {
     handle: Option<toup::HToupCam>,
 }
 
+#[derive(Debug)]
 pub enum ToupcamError {
     NoHandle,
 }
@@ -115,7 +116,7 @@ impl ToupcamDevice {
 
         let callback_context = ToupCallbackContext {
             handle,
-            nested_callback: Box::new(|buffer| {}),
+            nested_callback: Box::new(callback),
         };
 
         let result = unsafe {
@@ -125,6 +126,10 @@ impl ToupcamDevice {
                 Box::into_raw(Box::new(callback_context)) as *mut std::os::raw::c_void,
             )
         };
+
+        // TODO: Figure out why status code is unsuccessful
+
+        print!("Starting camera with result code: {}", result);
 
         // TODO: Handle result code
 

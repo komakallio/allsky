@@ -1,4 +1,4 @@
-use crate::camera::{Camera, toupcam};
+use crate::camera::Camera;
 use crate::image::Image;
 use crate::ring_buffer::RingBuffer;
 use std::sync::Arc;
@@ -12,7 +12,7 @@ pub(crate) fn start_camera_thread(
     ring_buffer: Arc<Mutex<RingBuffer<Image>>>,
 ) -> thread::JoinHandle<()> {
     thread::spawn(move || {
-        let mut found_devices = toupcam::ToupcamDevice::enumerate_devices();
+        let mut found_devices = libtoupcam::ToupcamDevice::enumerate_devices();
         found_devices.iter().for_each(|device| {
             println!(
                 "Found camera: {} (ID: {})",
@@ -24,9 +24,9 @@ pub(crate) fn start_camera_thread(
         let cam = found_devices.first_mut().expect("No cameras found!");
         cam.open();
 
-        let callback = move |image: &Image| {
+        let callback = move |image: Vec<u8>| {
             println!("Camera thread callback called!");
-            ring_buffer.lock().unwrap().add(image.clone());
+            // TODO: Create Image struct and put it in the ring buffer
         };
 
         match cam.start(callback) {
