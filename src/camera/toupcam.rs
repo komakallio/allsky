@@ -14,6 +14,8 @@ pub(crate) struct ToupcamDevice {
 
 struct CallbackContext {
     callback: Box<dyn FnMut(&Image) + Send + 'static>,
+    image_buffer: Vec<u8>,
+    cam_handle: Box<libtoupcam::ToupcamHandle>,
 }
 
 extern "C" fn base_callback(event: std::os::raw::c_uint, context: *mut std::os::raw::c_void) {
@@ -66,12 +68,20 @@ impl Camera for ToupcamDevice {
             ));
         }
 
-        let mut callback_context = Some(CallbackContext {
+        let Ok((width, height)) = libtoupcam::get_resolution(&self.handle.as_ref().unwrap()) else {
+            return Err(CameraError::StartError(
+                "Failed to get camera resolution".to_string(),
+            ));
+        };
+
+        let mut callback_context = CallbackContext {
             callback: Box::new(callback),
-        });
+            image_buffer: vec![0; (width * height * 2) as usize], // 2 bytes per pixel (16-bit raw image)
+            cam_handle: Box::new(self.handle.unwrap()),
+        };
 
         let result = libtoupcam::start_pull_mode(
-            &self.handle.as_ref().unwrap(),
+            self.handle.as_ref().unwrap(),
             Some(base_callback),
             &mut callback_context,
         );
