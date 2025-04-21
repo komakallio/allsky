@@ -46,7 +46,7 @@ impl Camera for ToupcamDevice {
 
     fn close(&mut self) {
         if let Some(handle) = self.handle.take() {
-            libtoupcam::close(handle);
+            libtoupcam::close(&handle);
         }
     }
 
@@ -97,7 +97,7 @@ impl Camera for ToupcamDevice {
 
     fn stop(&mut self) -> Result<(), CameraError> {
         if let Some(handle) = self.handle.take() {
-            let result = libtoupcam::stop(handle);
+            let result = libtoupcam::stop(&handle);
             match result {
                 result if result >= 0 => Ok(()),
                 _ => Err(CameraError::StopError(format!(
