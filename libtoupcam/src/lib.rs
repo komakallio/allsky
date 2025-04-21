@@ -72,6 +72,16 @@ pub fn set_resolution(cam: ToupcamHandle, width: u32, height: u32) {
     unsafe { toup::Toupcam_put_Size(cam.handle, width as i32, height as i32) };
 }
 
+pub fn get_resolution(cam: &ToupcamHandle) -> Result<(u32, u32), toup::HRESULT> {
+    let mut width = 0;
+    let mut height = 0;
+    let result = unsafe { toup::Toupcam_get_Size(cam.handle, &mut width, &mut height) };
+    match result {
+        result if result >= 0 => Ok((width as u32, height as u32)),
+        _ => Err(result),
+    }
+}
+
 pub fn start_pull_mode<T>(
     cam: &ToupcamHandle,
     callback: toup::PTOUPCAM_EVENT_CALLBACK,
