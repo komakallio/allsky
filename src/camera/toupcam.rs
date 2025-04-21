@@ -68,6 +68,15 @@ impl Camera for ToupcamDevice {
             ));
         }
 
+        match libtoupcam::set_raw_mode(&self.handle.as_ref().unwrap(), true) {
+            result if result >= 0 => (),
+            _ => {
+                return Err(CameraError::StartError(
+                    "Failed to set camera to raw mode".to_string(),
+                ));
+            }
+        }
+
         let Ok((width, height)) = libtoupcam::get_resolution(&self.handle.as_ref().unwrap()) else {
             return Err(CameraError::StartError(
                 "Failed to get camera resolution".to_string(),

@@ -54,6 +54,10 @@ pub fn close(cam: &ToupcamHandle) {
     unsafe { toup::Toupcam_Close(cam.handle) }
 }
 
+pub fn set_raw_mode(cam: &ToupcamHandle, raw_mode: bool) -> toup::HRESULT {
+    unsafe { toup::Toupcam_put_Option(cam.handle, toup::TOUPCAM_OPTION_RAW, raw_mode as i32) }
+}
+
 pub fn get_resolutions(cam: &ToupcamHandle) -> Vec<(u32, u32)> {
     let camera_model = unsafe { &*toup::Toupcam_query_Model(cam.handle) };
     camera_model
