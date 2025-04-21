@@ -102,16 +102,60 @@ impl ToupcamDevice {
         // TODO: Handle result code
         Ok(gain)
     }
+
+    pub fn start<F>(&self, callback: F) -> Result<(), ToupcamError>
+    where
+        F: FnMut(Vec<u8>) + Send + 'static,
+    {
+        let Some(handle) = self.handle else {
+            return Err(ToupcamError::NoHandle);
+        };
+
+        self.set_raw_mode(true)?;
+
+        let callback_context = ToupCallbackContext {
+            handle,
+            nested_callback: Box::new(|buffer| {}),
+        };
+
+        let result = unsafe {
+            toup::Toupcam_StartPullModeWithCallback(
+                handle,
+                Some(toup_event_callback),
+                Box::into_raw(Box::new(callback_context)) as *mut std::os::raw::c_void,
+            )
+        };
+
+        // TODO: Handle result code
+
+        Ok(())
+    }
 }
 
-#[derive(Debug)]
-pub struct ToupcamHandle {
+struct ToupCallbackContext {
     handle: toup::HToupCam,
+    nested_callback: Box<dyn FnMut(Vec<u8>) + Send + 'static>,
 }
 
-#[derive(Debug)]
-pub enum EventType {
-    Image = toup::TOUPCAM_EVENT_IMAGE as isize,
+extern "C" fn toup_event_callback(event: std::os::raw::c_uint, context: *mut std::os::raw::c_void) {
+    let callback_context = unsafe { &mut *(context as *mut ToupCallbackContext) };
+    if event == toup::TOUPCAM_EVENT_IMAGE {
+        let mut frame_info = unsafe { std::mem::zeroed::<toup::ToupcamFrameInfoV4>() };
+        let result = unsafe {
+            toup::Toupcam_PullImageV4(
+                callback_context.handle,
+                std::ptr::null_mut(),
+                0,
+                0,
+                0,
+                &mut frame_info,
+            )
+        };
+
+        // TODO: Handle result code
+
+        (callback_context.nested_callback)(vec![0u8; 0]);
+    }
 }
 
 pub fn enumerate_cameras() -> Vec<ToupcamDevice> {
@@ -131,108 +175,6 @@ pub fn enumerate_cameras() -> Vec<ToupcamDevice> {
         });
     }
     cameras
-}
-
-pub fn open_first() -> ToupcamHandle {
-    unsafe {
-        ToupcamHandle {
-            handle: toup::Toupcam_Open(std::ptr::null_mut()),
-        }
-    }
-}
-
-pub fn open_by_index(index: usize) -> ToupcamHandle {
-    unsafe {
-        ToupcamHandle {
-            handle: toup::Toupcam_OpenByIndex(index as u32),
-        }
-    }
-}
-
-pub fn close(cam: &ToupcamHandle) {
-    unsafe { toup::Toupcam_Close(cam.handle) }
-}
-
-pub fn set_raw_mode(cam: &ToupcamHandle, raw_mode: bool) -> toup::HRESULT {
-    unsafe { toup::Toupcam_put_Option(cam.handle, toup::TOUPCAM_OPTION_RAW, raw_mode as i32) }
-}
-
-pub fn get_resolutions(cam: &ToupcamHandle) -> Vec<(u32, u32)> {
-    let camera_model = unsafe { &*toup::Toupcam_query_Model(cam.handle) };
-    camera_model
-        .res
-        .iter()
-        .filter(|res| res.width > 0 && res.height > 0)
-        .map(|res| (res.width, res.height))
-        .collect()
-}
-
-pub fn set_resolution_by_index(cam: &ToupcamHandle, index: usize) {
-    unsafe { toup::Toupcam_put_eSize(cam.handle, index as u32) };
-}
-
-pub fn set_resolution(cam: &ToupcamHandle, width: u32, height: u32) {
-    unsafe { toup::Toupcam_put_Size(cam.handle, width as i32, height as i32) };
-}
-
-pub fn get_resolution(cam: &ToupcamHandle) -> Result<(u32, u32), toup::HRESULT> {
-    let mut width = 0;
-    let mut height = 0;
-    let result = unsafe { toup::Toupcam_get_Size(cam.handle, &mut width, &mut height) };
-    match result {
-        result if result >= 0 => Ok((width as u32, height as u32)),
-        _ => Err(result),
-    }
-}
-
-pub fn start_pull_mode<T>(
-    cam: &ToupcamHandle,
-    callback: toup::PTOUPCAM_EVENT_CALLBACK,
-    context: &mut Box<T>,
-) -> toup::HRESULT {
-    unsafe {
-        toup::Toupcam_StartPullModeWithCallback(
-            cam.handle,
-            callback,
-            context.as_mut() as *mut T as *mut std::os::raw::c_void,
-        )
-    }
-}
-
-pub fn pull_image(
-    cam: &ToupcamHandle,
-    buffer: &mut Vec<u8>,
-    still: bool,
-    bits: usize,
-    row_pitch: usize,
-) -> toup::HRESULT {
-    let mut frame_info = unsafe { std::mem::zeroed::<toup::ToupcamFrameInfoV4>() };
-    unsafe {
-        toup::Toupcam_PullImageV4(
-            cam.handle,
-            buffer.as_mut_ptr() as *mut std::os::raw::c_void,
-            still as i32,
-            bits as i32,
-            row_pitch as i32,
-            &mut frame_info,
-        )
-    }
-}
-
-pub fn stop(cam: &ToupcamHandle) -> toup::HRESULT {
-    unsafe { toup::Toupcam_Stop(cam.handle) }
-}
-
-pub fn get_exposure_time(cam: &ToupcamHandle) -> u32 {
-    let mut exposure_time: u32 = 0;
-    unsafe { toup::Toupcam_get_ExpoTime(cam.handle, &mut exposure_time) };
-    exposure_time
-}
-
-pub fn get_gain(cam: &ToupcamHandle) -> u16 {
-    let mut gain: u16 = 0;
-    unsafe { toup::Toupcam_get_ExpoAGain(cam.handle, &mut gain) };
-    gain
 }
 
 #[cfg(target_family = "windows")]
