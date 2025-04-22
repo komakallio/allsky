@@ -10,6 +10,7 @@ pub struct ToupcamDevice {
 #[derive(Debug)]
 pub enum ToupcamError {
     NoHandle,
+    Generic(i32),
 }
 
 impl ToupcamDevice {
@@ -34,7 +35,9 @@ impl ToupcamDevice {
 
         let result =
             unsafe { toup::Toupcam_put_Option(handle, toup::TOUPCAM_OPTION_RAW, enabled as i32) };
-        // TODO: Handle result code
+        if result < 0 {
+            return Err(ToupcamError::Generic(result));
+        }
         Ok(())
     }
 
@@ -58,7 +61,9 @@ impl ToupcamDevice {
         };
 
         let result = unsafe { toup::Toupcam_put_eSize(handle, index as u32) };
-        // TODO: Handle result code
+        if result < 0 {
+            return Err(ToupcamError::Generic(result));
+        }
         Ok(())
     }
 
@@ -78,7 +83,9 @@ impl ToupcamDevice {
         };
 
         let result = unsafe { toup::Toupcam_Stop(handle) };
-        // TODO: Handle result code
+        if result < 0 {
+            return Err(ToupcamError::Generic(result));
+        }
         Ok(())
     }
 
@@ -89,7 +96,9 @@ impl ToupcamDevice {
 
         let mut exposure_time: u32 = 0;
         let result = unsafe { toup::Toupcam_get_ExpoTime(handle, &mut exposure_time) };
-        // TODO: Handle result code
+        if result < 0 {
+            return Err(ToupcamError::Generic(result));
+        }
         Ok(exposure_time)
     }
 
@@ -100,7 +109,9 @@ impl ToupcamDevice {
 
         let mut gain: u16 = 0;
         let result = unsafe { toup::Toupcam_get_ExpoAGain(handle, &mut gain) };
-        // TODO: Handle result code
+        if result < 0 {
+            return Err(ToupcamError::Generic(result));
+        }
         Ok(gain)
     }
 
@@ -127,11 +138,10 @@ impl ToupcamDevice {
             )
         };
 
+        if result < 0 {
+            return Err(ToupcamError::Generic(result));
+        }
         // TODO: Figure out why status code is unsuccessful
-
-        print!("Starting camera with result code: {}", result);
-
-        // TODO: Handle result code
 
         Ok(())
     }

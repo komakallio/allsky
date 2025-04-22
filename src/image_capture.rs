@@ -22,7 +22,7 @@ pub(crate) fn start_camera_thread(
         });
         println!("Picking first camera");
         let cam = found_devices.first_mut().expect("No cameras found!");
-        cam.open();
+        cam.open().expect("Failed to open camera!");
 
         let callback = move |image: Vec<u8>| {
             println!("Camera thread callback called!");
@@ -46,7 +46,10 @@ pub(crate) fn start_camera_thread(
         if let Err(err) = cam.stop() {
             println!("Failed to stop camera: {:?}", err);
         }
-        cam.close();
-        println!("Camera thread exited cleanly.");
+        if let Err(err) = cam.close() {
+            println!("Failed to close camera: {:?}", err);
+        }
+
+        println!("Camera thread exited.");
     })
 }
