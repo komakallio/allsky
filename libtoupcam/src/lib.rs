@@ -192,6 +192,7 @@ extern "C" fn toup_event_callback(event: std::os::raw::c_uint, context: *mut std
         };
 
         // TODO: Handle result code
+        // TODO: Store image data in a buffer and pass it to the callback
 
         (callback_context.nested_callback)(vec![0u8; 0]);
     }
