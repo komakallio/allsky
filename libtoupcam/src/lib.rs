@@ -15,12 +15,31 @@ pub enum ToupcamError {
 }
 
 impl ToupcamDevice {
+    #[cfg(target_family = "windows")]
     pub fn open(&mut self) -> Result<(), ToupcamError> {
         if self.handle.is_some() {
             return Err(ToupcamError::OpenHandle);
         }
 
-        self.handle = Some(unsafe { toup::Toupcam_Open(self.id.as_ptr() as *mut _) });
+        // Convert to wide characters for Windows
+        let wide_id: Vec<u16> = self.id.encode_utf16().chain(std::iter::once(0)).collect();
+
+        self.handle = Some(unsafe { toup::Toupcam_Open(wide_id.as_ptr()) });
+        Ok(())
+    }
+
+    #[cfg(not(target_family = "windows"))]
+    pub fn open(&mut self) -> Result<(), ToupcamError> {
+        if self.handle.is_some() {
+            return Err(ToupcamError::OpenHandle);
+        }
+
+        // Use CString for non-Windows platforms
+        use std::ffi::CString;
+
+        let c_id = CString::new(&self.id).expect("Camera ID is an invalid string");
+
+        self.handle = Some(unsafe { toup::Toupcam_Open(c_id.as_ptr()) });
         Ok(())
     }
 
@@ -147,7 +166,6 @@ impl ToupcamDevice {
         if result < 0 {
             return Err(ToupcamError::Generic(result));
         }
-        // TODO: Figure out why status code is unsuccessful
 
         Ok(())
     }
