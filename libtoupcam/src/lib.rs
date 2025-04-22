@@ -80,6 +80,20 @@ impl ToupcamDevice {
             .collect())
     }
 
+    pub fn get_resolution(&self) -> Result<(u32, u32), ToupcamError> {
+        let Some(handle) = self.handle else {
+            return Err(ToupcamError::NoHandle);
+        };
+
+        let mut width: i32 = 0;
+        let mut height: i32 = 0;
+        let result = unsafe { toup::Toupcam_get_Size(handle, &mut width, &mut height) };
+        if result < 0 {
+            return Err(ToupcamError::Generic(result));
+        }
+        Ok((width as u32, height as u32))
+    }
+
     pub fn set_resolution_by_index(&self, index: usize) -> Result<(), ToupcamError> {
         let Some(handle) = self.handle else {
             return Err(ToupcamError::NoHandle);
@@ -153,9 +167,14 @@ impl ToupcamDevice {
 
         self.set_raw_mode(true)?;
 
+        let (width, height) = self.get_resolution()?;
+        // 16-bit raw images are 2 bytes per pixel
+        let image_buffer = vec![0u8; (width * height * 2) as usize];
+
         let callback_context = ToupCallbackContext {
             handle,
             nested_callback: Box::new(callback),
+            image_buffer,
         };
 
         let result = unsafe {
@@ -177,6 +196,7 @@ impl ToupcamDevice {
 struct ToupCallbackContext {
     handle: toup::HToupCam,
     nested_callback: Box<dyn FnMut(Vec<u8>) + Send + 'static>,
+    image_buffer: Vec<u8>,
 }
 
 extern "C" fn toup_event_callback(event: std::os::raw::c_uint, context: *mut std::os::raw::c_void) {
@@ -186,7 +206,7 @@ extern "C" fn toup_event_callback(event: std::os::raw::c_uint, context: *mut std
         let result = unsafe {
             toup::Toupcam_PullImageV4(
                 callback_context.handle,
-                std::ptr::null_mut(),
+                callback_context.image_buffer.as_mut_ptr() as *mut _,
                 0,
                 0,
                 0,
@@ -195,9 +215,8 @@ extern "C" fn toup_event_callback(event: std::os::raw::c_uint, context: *mut std
         };
 
         // TODO: Handle result code
-        // TODO: Store image data in a buffer and pass it to the callback
 
-        (callback_context.nested_callback)(vec![0u8; 0]);
+        (callback_context.nested_callback)(callback_context.image_buffer.clone());
     }
 }
 

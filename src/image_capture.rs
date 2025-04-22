@@ -24,7 +24,7 @@ pub(crate) fn start_camera_thread(
         let cam = found_devices.first_mut().expect("No cameras found!");
         cam.open().expect("Failed to open camera!");
 
-        let callback = move |image: Vec<u8>| {
+        let callback = move |image_buffer: Vec<u8>| {
             println!("Camera thread callback called!");
             // TODO: Create Image struct and put it in the ring buffer
         };
