@@ -35,7 +35,7 @@ impl Camera for libtoupcam::ToupcamDevice {
     where
         F: FnMut(Vec<u8>) + Send + 'static,
     {
-        Ok(Self::start(&self, callback)?)
+        Ok(Self::start(self, callback)?)
     }
 
     fn stop(&mut self) -> Result<(), CameraError> {
