@@ -214,7 +214,9 @@ extern "C" fn toup_event_callback(event: std::os::raw::c_uint, context: *mut std
             )
         };
 
-        // TODO: Handle result code
+        if result < 0 {
+            println!("Error pulling image: {}", result);
+        }
 
         (callback_context.nested_callback)(callback_context.image_buffer.clone());
     }
