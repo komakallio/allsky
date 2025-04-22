@@ -10,12 +10,18 @@ pub struct ToupcamDevice {
 #[derive(Debug)]
 pub enum ToupcamError {
     NoHandle,
+    OpenHandle,
     Generic(i32),
 }
 
 impl ToupcamDevice {
-    pub fn open(&mut self) {
+    pub fn open(&mut self) -> Result<(), ToupcamError> {
+        if self.handle.is_some() {
+            return Err(ToupcamError::OpenHandle);
+        }
+
         self.handle = Some(unsafe { toup::Toupcam_Open(self.id.as_ptr() as *mut _) });
+        Ok(())
     }
 
     pub fn close(&mut self) -> Result<(), ToupcamError> {

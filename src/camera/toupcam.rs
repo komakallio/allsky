@@ -24,7 +24,7 @@ impl Camera for libtoupcam::ToupcamDevice {
     }
 
     fn open(&mut self) -> Result<(), CameraError> {
-        Ok(Self::open(self))
+        Ok(Self::open(self)?)
     }
 
     fn close(&mut self) -> Result<(), CameraError> {
