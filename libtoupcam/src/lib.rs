@@ -98,7 +98,10 @@ impl ToupcamDevice {
         };
 
         let result = unsafe { toup::Toupcam_put_Size(handle, width as i32, height as i32) };
-        // TODO: Handle result code
+        if result < 0 {
+            return Err(ToupcamError::Generic(result));
+        }
+
         Ok(())
     }
 
