@@ -11,7 +11,7 @@ extern "C" fn callback(event: c_uint, ctx: *mut c_void) {
         let return_code = unsafe {
             Toupcam_PullImageV4(
                 callback_context.cam as HToupCam,
-                callback_context.image_buffer.as_mut_ptr() as *mut c_void,
+                callback_context.image_buffer.as_mut_ptr() as *mut _,
                 0,
                 0,
                 0,
@@ -70,7 +70,7 @@ fn main() {
         Toupcam_StartPullModeWithCallback(
             cam,
             Some(callback),
-            &mut callback_context as *mut CallbackContext as *mut c_void,
+            &mut callback_context as *mut CallbackContext as *mut _,
         )
     };
 
