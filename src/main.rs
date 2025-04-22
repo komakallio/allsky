@@ -30,6 +30,7 @@ fn main() {
     let camera_thread = start_camera_thread(Arc::clone(&running), Arc::clone(&ring_buffer));
     let analysis_thread = start_analysis_thread(Arc::clone(&running), Arc::clone(&ring_buffer));
 
+    // TODO: If one thread panics, we should stop the other thread as well
     camera_thread.join().expect("Camera thread panicked!");
     analysis_thread.join().expect("Analysis thread panicked!");
 }
